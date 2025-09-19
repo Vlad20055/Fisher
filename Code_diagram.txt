@@ -1,0 +1,91 @@
+erDiagram
+    users {
+        INT id PK "Уникальный идентификатор"
+        STRING username UK "Логин"
+        STRING password_hash "Хэш пароля"
+        STRING full_name "ФИО"
+        STRING role "Роль"
+        BOOL is_active "Статус активации"
+    }
+    
+    stores {
+        INT id PK "Уникальный идентификатор"
+        STRING name "Название магазина"
+        STRING address "Адрес"
+        STRING tax_id UK "ИНН"
+        INT manager_id FK "ID менеджера"
+    }
+
+    categories {
+        INT id PK "Уникальный идентификатор"
+        STRING name UK "Название категории"
+    }
+
+    products {
+        INT id PK "Уникальный идентификатор"
+        STRING name "Название товара"
+        STRING description "Описание"
+        FLOAT price "Цена"
+        INT quantity_in_stock "Количество на складе"
+        INT category_id FK "ID категории"
+    }
+
+    orders {
+        INT id PK "Уникальный идентификатор"
+        INT store_id FK "ID магазина"
+        FLOAT total_amount "Общая сумма"
+        STRING status "Статус заказа"
+    }
+
+    order_items {
+        INT id PK "Уникальный идентификатор"
+        INT order_id FK "ID заказа"
+        INT product_id FK "ID товара"
+        INT quantity "Количество"
+        FLOAT unit_price "Цена на момент заказа"
+    }
+
+    company_account {
+        INT id PK "Уникальный идентификатор"
+        FLOAT balance "Текущий баланс"
+    }
+
+    transactions {
+        INT id PK "Уникальный идентификатор"
+        INT order_id FK "ID заказа"
+        FLOAT amount "Сумма пополнения"
+    }
+
+    confirmations {
+        INT id PK "Уникальный идентификатор"
+        INT admin_id FK "ID администратора"
+        INT user_id FK "ID пользователя"
+    }
+
+    audit_log {
+        INT id PK "Уникальный идентификатор"
+        INT user_id FK "ID пользователя"
+        STRING entity_type "Тип сущности"
+        INT entity_id "ID сущности"
+        STRING details "Детали изменения"
+        TIMESTAMP performed_at "Дата и время"
+    }
+
+    users ||--o| stores : "управляет"
+    users ||--o{ confirmations : "подтверждает"
+    users ||--o{ audit_log : "совершает действие"
+    
+    categories ||--o{ products : "включает"
+    
+    stores ||--o{ orders : "создает"
+    stores ||--|| users : "имеет менеджера"
+
+    products ||--o{ order_items : "входит в"
+
+    orders ||--o{ order_items : "содержит"
+    orders ||--|| transactions : "оплачивается"
+    orders }|--|| stores : "принадлежит"
+
+    order_items }|--|| products : "является"
+
+    transactions }|--|| orders : "оплачивает"
