@@ -3,7 +3,7 @@
     username (VARCHAR, UNIQUE) - Логин
     password_hash (VARCHAR) - Хэш пароля
     full_name (VARCHAR) - ФИО
-    role (ENUM('admin', 'company_manager', 'store_manager')) - Роль
+    role_id (INTEGER) - Роль
     is_active (BOOLEAN, DEFAULT FALSE) - Статус активации
 Обоснование: Основная сущность для аутентификации и авторизации. Хранение хэша пароля — стандартная практика безопасности.
 
@@ -11,60 +11,66 @@
     id (PK, SERIAL)
     name (VARCHAR) - Название магазина
     address (TEXT) - Адрес
-    tax_id (VARCHAR(20), UNIQUE) - ИНН
-    manager_id (FK -> users.id) - ID менеджера магазина
+    tax_id (VARCHAR, UNIQUE) - ИНН
+    manager_id (INTEGER) - ID менеджера магазина
 Обоснование: Сущность для хранения данных о магазинах-клиентах. Связь "один-к-одному" с пользователем-менеджером (один магазин - один менеджер).
 
 3 categories (Категории товаров)
     id (PK, SERIAL)
-    name (VARCHAR, UNIQUE) - Название категории (e.g., "Удочки", "Катушки", "Лески")
+    name (VARCHAR, UNIQUE) - Название категории
 Обоснование: Справочная сущность для типизации товаров. Нужна для организации каталога.
 
 4 products (Товары)
     id (PK, SERIAL)
     name (VARCHAR) - Название товара
-    description (TEXT, NULLABLE) - Описание
-    price (DECIMAL(10, 2)) - Цена
-    quantity_in_stock (INTEGER) - Количество на складе
-    category_id (FK -> categories.id) - Категория
+    description (TEXT) - Описание
+    price (DECIMAL) - Цена
+    quantity_in_stock (INTEGER, DEFAULT 0) - Количество на складе
+    category_id (INTEGER) - Категория
 Обоснование: Основная бизнес-сущность. Хранит данные о товарах компании.
 
 5 orders (Заказы)
     id (PK, SERIAL)
-    store_id (FK -> stores.id) - Магазин-заказчик
-    total_amount (DECIMAL(10, 2)) - Общая сумма заказа
-    status (ENUM('pending', 'confirmed', 'cancelled')) - Статус заказа
+    store_id (INTEGER) - Магазин-заказчик
+    total_amount (DECIMAL) - Общая сумма заказа
+    created_at (TIMESTAMP, DEFAULT NOW()) - Дата создания
 Обоснование: Сущность для регистрации факта заказа. Сумма дублируется для истории и неизменности при возможном изменении цены товара.
 
 6 order_items (Позиции заказа)
     id (PK, SERIAL)
-    order_id (FK -> orders.id)
-    product_id (FK -> products.id)
+    order_id (INTEGER) - ID заказа
+    product_id (INTEGER) - ID товара
     quantity (INTEGER) - Количество заказанного товара
-    unit_price (DECIMAL(10, 2)) - Цена товара на момент заказа
+    unit_price (DECIMAL) - Цена товара на момент заказа
 Обоснование: Промежуточная сущность для связи MTM между orders и products. НЕСЕТ важную дополнительную информацию (quantity, unit_price), поэтому считается отдельной сущностью.
 
-7 company_account (Счёт компании)
+7 company_accounts (Счёт компании)
     id (PK, SERIAL)
-    balance (DECIMAL(15, 2), DEFAULT 0) - Текущий баланс
-Обоснование: Сущность для хранения виртуального счёта. Может быть всего одна запись.
+    balance (DECIMAL, DEFAULT 0.0) - Текущий баланс
+Обоснование: Сущность для учета общих денежных средств компании. Централизованное управление финансами.
 
 8 transactions (Транзакции)
     id (PK, SERIAL)
-    order_id (FK -> orders.id, UNIQUE) - Ссылка на оплаченный заказ
-    amount (DECIMAL(10, 2)) - Сумма пополнения
-Обоснование: Сущность для журналирования пополнений счёта. Обеспечивает связь "один-к-одному" с заказом (один заказ - одна транзакция оплаты).
+    store_account_id (INTEGER) - ID счета магазина
+    company_account_id (INTEGER) - ID счета компании
+    amount (DECIMAL) - Сумма перевода
+Обоснование: Сущность для регистрации финансовых операций между счетами магазинов и компании. Обеспечивает аудит денежных потоков.
 
-9 confirmations (Подтверждения регистраций)
+9 roles (Роли)
     id (PK, SERIAL)
-    admin_id (FK -> users.id) - Администратор, который выполнил подтверждение
-    user_id (FK -> users.id, UNIQUE) - Пользователь, которого подтвердили
+    name (VARCHAR, UNIQUE) - Название роли
+Обоснование: Справочная сущность для управления правами доступа. Позволяет гибко настраивать роли без изменения структуры базы.
 
 10 audit_log (Журнал аудита)
     id (PK, SERIAL)
-    user_id (FK -> users.id, NULLABLE) - Пользователь, совершивший действие
-    entity_type (VARCHAR) - Тип сущности (e.g., "Product", "User", "Order")
-    entity_id (INTEGER, NULLABLE) - ID затронутой сущности
-    details (TEXT, NULLABLE) - Детали изменения (e.g., "Price: 1000 → 1200")
-    performed_at (TIMESTAMP) - Дата и время
-Обоснование: Ключевая сущность для выполнения требований по журналированию.
+    user_id (INTEGER) - Пользователь, совершивший действие
+    details (TEXT) - Детали изменения
+    performed_at (TIMESTAMP, DEFAULT NOW()) - Дата и время
+Обоснование: Сущность для протоколирования действий пользователей. Обеспечивает безопасность и отслеживаемость операций в системе.
+
+11 store_accounts (Счета магазинов)
+    id (PK, SERIAL)
+    balance (DECIMAL, DEFAULT 0.0) - Текущий баланс
+    store_id (INTEGER) - ID магазина
+Обоснование: Сущность для учета денежных средств каждого магазина. Обеспечивает изоляцию финансовых потоков.
+

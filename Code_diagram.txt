@@ -1,91 +1,107 @@
-erDiagram
-    users {
-        INT id PK "Уникальный идентификатор"
-        STRING username UK "Логин"
-        STRING password_hash "Хэш пароля"
-        STRING full_name "ФИО"
-        STRING role "Роль"
-        BOOL is_active "Статус активации"
-    }
-    
-    stores {
-        INT id PK "Уникальный идентификатор"
-        STRING name "Название магазина"
-        STRING address "Адрес"
-        STRING tax_id UK "ИНН"
-        INT manager_id FK "ID менеджера"
-    }
+https://dbdiagram.io/d
 
-    categories {
-        INT id PK "Уникальный идентификатор"
-        STRING name UK "Название категории"
-    }
+// Таблица пользователей
+Table users {
+  id uint [primary key, increment]
+  username text [unique, not null]
+  password_hash text [not null]
+  full_name text [not null]
+  role_id uint [not null]
+  is_active boolean
+}
 
-    products {
-        INT id PK "Уникальный идентификатор"
-        STRING name "Название товара"
-        STRING description "Описание"
-        FLOAT price "Цена"
-        INT quantity_in_stock "Количество на складе"
-        INT category_id FK "ID категории"
-    }
+// Таблица ролей
+Table roles {
+  id uint [primary key, increment]
+  name text [not null, unique]
+}
 
-    orders {
-        INT id PK "Уникальный идентификатор"
-        INT store_id FK "ID магазина"
-        FLOAT total_amount "Общая сумма"
-        STRING status "Статус заказа"
-    }
+// Таблица магазинов
+Table stores {
+  id uint [primary key, increment]
+  name text [not null]
+  address text [not null]
+  tax_id text [unique, not null]
+  manager_id uint [not null]
+}
 
-    order_items {
-        INT id PK "Уникальный идентификатор"
-        INT order_id FK "ID заказа"
-        INT product_id FK "ID товара"
-        INT quantity "Количество"
-        FLOAT unit_price "Цена на момент заказа"
-    }
+// Таблица категорий товаров
+Table categories {
+  id uint [primary key, increment]
+  name text [not null, unique]
+}
 
-    company_account {
-        INT id PK "Уникальный идентификатор"
-        FLOAT balance "Текущий баланс"
-    }
+// Таблица товаров
+Table products {
+  id uint [primary key, increment]
+  name text [not null]
+  description text
+  price decimal [not null]
+  quantity_in_stock uint [default: 0]
+  category_id uint [not null]
+}
 
-    transactions {
-        INT id PK "Уникальный идентификатор"
-        INT order_id FK "ID заказа"
-        FLOAT amount "Сумма пополнения"
-    }
+// Таблица заказов
+Table orders {
+  id uint [primary key, increment]
+  store_id uint [not null]
+  total_amount decimal [not null]
+  created_at timestamp [default: `now()`]
+}
 
-    confirmations {
-        INT id PK "Уникальный идентификатор"
-        INT admin_id FK "ID администратора"
-        INT user_id FK "ID пользователя"
-    }
+// Таблица позиций заказа
+Table order_items {
+  id uint [primary key, increment]
+  order_id uint [not null]
+  product_id uint [not null]
+  quantity uint [not null]
+  unit_price decimal [not null]
+}
 
-    audit_log {
-        INT id PK "Уникальный идентификатор"
-        INT user_id FK "ID пользователя"
-        STRING entity_type "Тип сущности"
-        INT entity_id "ID сущности"
-        STRING details "Детали изменения"
-        TIMESTAMP performed_at "Дата и время"
-    }
+// Таблица счета компании
+Table company_accounts {
+  id uint [primary key, increment]
+  balance decimal [default: 0.0]
+}
 
-    users ||--o| stores : "управляет"
-    users ||--o{ confirmations : "подтверждает"
-    users ||--o{ audit_log : "совершает действие"
-    
-    categories ||--o{ products : "включает"
-    
-    stores ||--o{ orders : "создает"
-    stores ||--|| users : "имеет менеджера"
+// Таблица транзакций
+Table transactions {
+  id uint [primary key, increment]
+  store_account_id uint [not null]
+  company_account_id uint [not null]
+  amount decimal [not null]
 
-    products ||--o{ order_items : "входит в"
+}
 
-    orders ||--o{ order_items : "содержит"
-    orders ||--|| transactions : "оплачивается"
-    orders }|--|| stores : "принадлежит"
+// Таблица журнала аудита
+Table audit_log {
+  id uint [primary key, increment]
+  user_id uint
+  details text
+  performed_at timestamp [default: `now()`]
+}
 
-    order_items }|--|| products : "является"
+Table store_accounts {
+  id uint [primary key, increment]
+  balance decimal [default: 0.0]
+  store_id uint [not null]
+}
 
-    transactions }|--|| orders : "оплачивает"
+// Связи между таблицами
+// Связи между таблицами
+
+// 1:1 связи
+Ref: stores.manager_id - users.id
+Ref: store_accounts.store_id - stores.id
+
+// 1:M связи
+Ref: users.role_id > roles.id
+Ref: products.category_id > categories.id
+Ref: orders.store_id > stores.id
+Ref: order_items.order_id > orders.id
+Ref: order_items.product_id > products.id
+Ref: audit_log.user_id > users.id
+
+// Связи для транзакций (1:M)
+Ref: store_accounts.id > transactions.store_account_id
+Ref: company_accounts.id > transactions.company_account_id
