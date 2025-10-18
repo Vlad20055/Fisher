@@ -179,5 +179,17 @@ INSERT INTO audit_log (user_id, details, performed_at) VALUES
 (1, 'Проведена транзакция №6: магазин "КлёвоТут" → компания, сумма 2450.00 руб', '2024-01-21 13:15:00');
  
 
+ALTER TABLE users ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE roles ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE stores ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE store_accounts ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE categories ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE products ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE orders ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE order_items ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE company_accounts ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE transactions ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+ALTER TABLE audit_log ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+
 
 

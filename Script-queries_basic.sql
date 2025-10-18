@@ -13,10 +13,14 @@ JOIN roles r ON u.role_id = r.id
 WHERE u.username = 'stas2006';
 
 -- Деактивировать пользователя
-UPDATE users SET is_active = false WHERE username = 'stas2006';
+UPDATE users
+SET is_active = false
+WHERE username = 'stas2006';
 
 -- Активировать пользователя
-UPDATE users SET is_active = true WHERE username = 'stas2006';
+UPDATE users
+SET is_active = true
+WHERE username = 'stas2006';
 
 
 -- 2. РАБОТА С ТОВАРАМИ
@@ -44,8 +48,72 @@ from products
 where quantity_in_stock < 500
 order by quantity_in_stock asc
 
--- Обновить количество товара
-UPDATE products SET quantity_in_stock = quantity_in_stock - 5 WHERE id = 1;
+-- Добавить товары на склад
+CREATE OR REPLACE FUNCTION update_product_quantity(
+    p_product_id UUID,
+    p_quantity_change INTEGER
+) 
+RETURNS TABLE(
+    success BOOLEAN,
+    message TEXT,
+    new_quantity INTEGER
+) AS $$
+DECLARE
+    current_quantity INTEGER;
+BEGIN
+    -- Пытаемся обновить
+    UPDATE products 
+    SET quantity_in_stock = quantity_in_stock + p_quantity_change
+    WHERE id = p_product_id
+    RETURNING quantity_in_stock INTO current_quantity;
+    
+    IF current_quantity IS NOT NULL THEN
+        RETURN QUERY SELECT true, 'Количество обновлено', current_quantity;
+    ELSE
+        RETURN QUERY SELECT false, 'Товар не найден', 0;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+select update_product_quantity(
+	'7d549fd1-b4fa-4950-b457-f94366f63353',
+	3
+);
+
+CREATE OR REPLACE FUNCTION update_product_price(
+    p_product_id UUID,
+    p_new_price DECIMAL(12,2)
+) 
+RETURNS TABLE(
+    success BOOLEAN,
+    message TEXT,
+    old_price DECIMAL(12,2),
+    new_price DECIMAL(12,2)
+) AS $$
+DECLARE
+    v_old_price DECIMAL(12,2);
+BEGIN
+    SELECT price INTO v_old_price 
+    FROM products 
+    WHERE id = p_product_id;
+    
+    IF v_old_price IS NULL THEN
+        RETURN QUERY SELECT false, 'Товар не найден', 0, 0;
+        RETURN;
+    END IF;
+    
+    UPDATE products 
+    SET price = p_new_price
+    WHERE id = p_product_id;
+    
+    RETURN QUERY SELECT true, 'Цена товара обновлена', v_old_price, p_new_price;
+END;
+$$ LANGUAGE plpgsql;
+
+select update_product_price(
+	'7d549fd1-b4fa-4950-b457-f94366f63353',
+	1420.80
+);
 
 
 -- 3. ЗАКАЗЫ И ПРОДАЖИ
@@ -74,10 +142,9 @@ ORDER BY total_sales DESC;
 -- 4. РАБОТА С ФИНАНСАМИ
 -- ===========================================
 -- Балансы всех счетов
-SELECT s.name as store_name, sa.balance as store_balance, ca.balance as company_balance
+SELECT s.name as store_name, sa.balance as store_balance
 FROM stores s
 JOIN store_accounts sa ON s.id = sa.store_id
-CROSS JOIN company_accounts ca;
 
 -- Все транзакции
 SELECT t.id, s.name as store, t.amount, t.store_account_id
@@ -135,5 +202,3 @@ SELECT s.name, sa.balance, u.username as manager
 FROM stores s
 JOIN store_accounts sa ON s.id = sa.store_id
 JOIN users u ON s.manager_id = u.id;
-
-
