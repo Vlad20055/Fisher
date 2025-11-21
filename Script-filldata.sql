@@ -12,6 +12,9 @@ INSERT INTO users (username, password_hash, full_name, role_id, is_active) VALUE
 ('stas2006', crypt('stas2006', gen_salt('bf')), 'Станислав', 3, true);
 
 INSERT INTO users (username, password_hash, full_name, role_id, is_active) VALUES 
+('nikita2006', crypt('nikita2006', gen_salt('bf')), 'Никита', 'd722ea82-7b7c-4543-89e3-be57c9c2d987', false);
+
+INSERT INTO users (username, password_hash, full_name, role_id, is_active) VALUES 
 ('anton2005', crypt('anton2006', gen_salt('bf')), 'Антон', 2, true),
 ('andrew2005', crypt('andrew2006', gen_salt('bf')), 'Андрей', 2, true),
 ('denis2005', crypt('denis2006', gen_salt('bf')), 'Денис', 2, true),
@@ -23,6 +26,9 @@ INSERT INTO stores (name, address, tax_id, manager_id) VALUES
 ('Крючок и пуля', 'Беларусь, г. Лепель, ул. Лепельская, д. 1', '123456789012', 3),
 ('Блесна', 'Беларусь, г. Витебск, пр. Строителей, д. 1', '123456789013', 8),
 ('КлёвоТут', 'Беларусь, г. Витебск, пр. Московский, д. 1', '123456789014', 9);
+
+insert into stores (name, address, tax_id, manager_id) values
+('Рыбак', 'Беларусьб г. Минск, проспект Держинского, д. 32', '123456789015', '56590c06-6ad7-41f7-bf98-b7895cd1d3d1');
 
 
 -- Вставляем счета магазинов
